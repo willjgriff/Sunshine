@@ -1,10 +1,14 @@
-package com.example.will.sunshine.app;
+package com.example.will.sunshine.app.AsyncTasks;
 
+import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.text.format.Time;
 import android.util.Log;
 import android.widget.ArrayAdapter;
+
+import com.example.will.sunshine.app.R;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,8 +32,10 @@ public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
     private String[] weatherData = null;
     private List<String> weatherDataList = null;
     private ArrayAdapter<String> forecastAdapter = null;
+    private Context context = null;
 
-    public FetchWeatherTask(ArrayAdapter<String> forecastAdapter) {
+    public FetchWeatherTask(Context context, ArrayAdapter<String> forecastAdapter) {
+        this.context = context;
         this.forecastAdapter = forecastAdapter;
     }
 
@@ -39,9 +45,11 @@ public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
 
 //        weatherDataList = Arrays.asList(weatherData);
 
-        forecastAdapter.clear();
-        for (String weatherEntry : weatherData) {
-            forecastAdapter.add(weatherEntry);
+        if (weatherData != null) {
+            forecastAdapter.clear();
+            for (String weatherEntry : weatherData) {
+                forecastAdapter.add(weatherEntry);
+            }
         }
     }
 
@@ -154,8 +162,23 @@ public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
      */
     private String formatHighLows(double high, double low) {
         // For presentation, assume the user doesn't care about tenths of a degree.
-        long roundedHigh = Math.round(high);
-        long roundedLow = Math.round(low);
+        double roundedHigh = Math.round(high);
+        double roundedLow = Math.round(low);
+
+        String tempUnit = PreferenceManager
+                .getDefaultSharedPreferences(context)
+                .getString(
+                        context.getString(R.string.pref_temp_units_key),
+                        context.getString(R.string.pref_temp_units_metric));
+
+        Log.d(LOG_TAG, "Temp unit: " + tempUnit);
+
+        if (tempUnit.equals(context.getString(R.string.pref_temp_units_imperial))) {
+            roundedHigh = (roundedHigh * 1.8) + 32;
+            roundedLow = (roundedLow * 1.8) + 32;
+        } else if (!tempUnit.equals(context.getString(R.string.pref_temp_units_metric))) {
+            Log.d(LOG_TAG, "Unit type not found: " + tempUnit);
+        }
 
         String highLowStr = roundedHigh + "/" + roundedLow;
         return highLowStr;

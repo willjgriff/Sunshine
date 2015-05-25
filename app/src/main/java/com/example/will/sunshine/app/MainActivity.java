@@ -1,6 +1,10 @@
 package com.example.will.sunshine.app;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -35,11 +39,36 @@ public class MainActivity extends ActionBarActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-            Log.d(LOG_TAG, "Settings tappes...");
+            Intent settingsIntent = new Intent(this, SettingsActivity.class);
+            startActivity(settingsIntent);
+            return true;
+        } else if (id == R.id.action_show_location) {
+            openPrefLocationOnMap();
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void openPrefLocationOnMap() {
+        SharedPreferences locationPreference = PreferenceManager
+                .getDefaultSharedPreferences(this);
+        String locationString = locationPreference.getString(
+                getString(R.string.pref_location_key),
+                getString(R.string.pref_location_default));
+
+        Uri geoLocation = Uri.parse("geo:0,0?").buildUpon()
+                .appendQueryParameter("q", locationString)
+                .build();
+
+        Intent mapsIntent = new Intent(Intent.ACTION_VIEW);
+        mapsIntent.setData(geoLocation);
+
+        if (mapsIntent.resolveActivity(getPackageManager()) != null) {
+            startActivity(mapsIntent);
+        } else {
+            Log.d(LOG_TAG, "Couldn't open location: " + locationString);
+        }
     }
 
 /*    private void makeActionOverflowMenuShown() {
