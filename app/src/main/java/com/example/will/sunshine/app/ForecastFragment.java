@@ -1,5 +1,6 @@
 package com.example.will.sunshine.app;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -9,6 +10,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -22,7 +24,8 @@ import java.util.List;
  */
 public class ForecastFragment extends Fragment {
 
-    private final String LOG_TAG = ForecastFragment.class.getName();
+    private final String LOG_TAG = ForecastFragment.class.getSimpleName();
+    private ArrayAdapter<String> forecastAdapter = null;
 
     public ForecastFragment() {
     }
@@ -36,7 +39,7 @@ public class ForecastFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
 //        super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.menu_main, menu);
+        inflater.inflate(R.menu.forecastfragment, menu);
     }
 
     @Override
@@ -48,6 +51,8 @@ public class ForecastFragment extends Fragment {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_refresh) {
+            FetchWeatherTask fetchWeatherTask = new FetchWeatherTask(forecastAdapter);
+            fetchWeatherTask.execute("94043");
             Log.d(LOG_TAG, "Refresh tapped...");
             return true;
         }
@@ -59,7 +64,6 @@ public class ForecastFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-
         String[] forecastData = {"Mon 6/23?- Sunny - 31/17",
                 "Tue 6/24 - Foggy - 21/8",
                 "Wed 6/25 - Cloudy - 22/17",
@@ -69,21 +73,28 @@ public class ForecastFragment extends Fragment {
                 "Sun 6/29 - Sunny - 20/7"};
         List<String> forecastEntries = new ArrayList<String>(Arrays.asList(forecastData));
 
-
-//        AsyncTask fetchWeatherTask = new FetchWeatherTask();
-//        fetchWeatherTask.execute();
-
-        ArrayAdapter<String> forecastAdapter =
+        forecastAdapter =
                 new ArrayAdapter<String>(
                         getActivity(),
                         R.layout.list_item_forecast,
                         R.id.list_item_forecast_textview,
-                        forecastData);
+                        forecastEntries);
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
         ListView forecast_listView = (ListView) rootView.findViewById(R.id.listview_forecast);
         forecast_listView.setAdapter(forecastAdapter);
+
+        forecast_listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String dayDetails = (String) parent.getItemAtPosition(position);
+
+                Intent forecastDetailsActivity = new Intent(getActivity(), ForecastDetailsActivity.class);
+                forecastDetailsActivity.putExtra("DAY_DETAILS", dayDetails);
+                startActivity(forecastDetailsActivity);
+            }
+        });
 
         return rootView;
     }
