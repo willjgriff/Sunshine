@@ -1,8 +1,8 @@
 package com.example.will.sunshine.app;
 
-import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -10,13 +10,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.example.will.sunshine.app.AsyncTasks.FetchWeatherTask;
-
-import java.util.ArrayList;
+import com.example.will.sunshine.app.data.WeatherContract;
 
 
 /**
@@ -25,7 +22,7 @@ import java.util.ArrayList;
 public class MainFragment extends Fragment {
 
     private final String LOG_TAG = MainFragment.class.getSimpleName();
-    private ArrayAdapter<String> forecastAdapter = null;
+    private ForecastAdapter forecastAdapter = null;
 
     public MainFragment() {
     }
@@ -65,13 +62,9 @@ public class MainFragment extends Fragment {
     }
 
     private void updateWeather() {
-        FetchWeatherTask fetchWeatherTask = new FetchWeatherTask(getActivity(), forecastAdapter);
+        FetchWeatherTask fetchWeatherTask = new FetchWeatherTask(getActivity());
 
-        String locationPreference = PreferenceManager
-                .getDefaultSharedPreferences(getActivity())
-                .getString(
-                        getString(R.string.pref_location_key),
-                        getString(R.string.pref_location_default));
+        String locationPreference = Utility.getPreferredLocation(getActivity());
 
         fetchWeatherTask.execute(locationPreference);
     }
@@ -80,28 +73,33 @@ public class MainFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        forecastAdapter =
-                new ArrayAdapter<String>(
-                        getActivity(),
-                        R.layout.list_item_forecast,
-                        R.id.list_item_forecast_textview,
-                        new ArrayList<String>());
+        String locationSetting = Utility.getPreferredLocation(getActivity());
+
+        // Sort order:  Ascending, by date.
+        String sortOrder = WeatherContract.WeatherEntry.COLUMN_DATE + " ASC";
+        Uri weatherForLocationUri = WeatherContract.WeatherEntry.buildWeatherLocationWithStartDate(
+                locationSetting, System.currentTimeMillis());
+
+        Cursor cur = getActivity().getContentResolver().query(weatherForLocationUri,
+                null, null, null, sortOrder);
+
+        forecastAdapter = new ForecastAdapter(getActivity(), cur, 0);
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
         ListView forecast_listView = (ListView) rootView.findViewById(R.id.listview_forecast);
         forecast_listView.setAdapter(forecastAdapter);
 
-        forecast_listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String dayDetails = (String) parent.getItemAtPosition(position);
-
-                Intent forecastDetailsActivity = new Intent(getActivity(), DetailsActivity.class);
-                forecastDetailsActivity.putExtra("DAY_DETAILS", dayDetails);
-                startActivity(forecastDetailsActivity);
-            }
-        });
+//        forecast_listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//                String dayDetails = (String) parent.getItemAtPosition(position);
+//
+//                Intent forecastDetailsActivity = new Intent(getActivity(), DetailsActivity.class);
+//                forecastDetailsActivity.putExtra("DAY_DETAILS", dayDetails);
+//                startActivity(forecastDetailsActivity);
+//            }
+//        });
 
         return rootView;
     }
