@@ -160,4 +160,6 @@ public class WeatherContract {
                 return 0;
         }
     }
+
+
 }
