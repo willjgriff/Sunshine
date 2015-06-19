@@ -171,9 +171,10 @@ public class DetailsFragment extends Fragment implements LoaderCallbacks<Cursor>
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
         if (data != null && data.moveToFirst()) {
             // Read weather condition ID from cursor
-//            int weatherId = data.getInt(data.getColumnIndex(WeatherEntry.COLUMN_WEATHER_ID));
+            int weatherId = data.getInt(data.getColumnIndex(WeatherEntry.COLUMN_WEATHER_ID));
+            int weatherIconId = Utility.getArtResourceForWeatherCondition(weatherId);
             // Use placeholder Image
-            mIconView.setImageResource(R.drawable.ic_launcher);
+            mIconView.setImageResource(weatherIconId);
 
             // Read date from cursor and update views for day of week and date
             long date = data.getLong(data.getColumnIndex(WeatherEntry.COLUMN_DATE));
